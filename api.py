@@ -102,8 +102,8 @@ def jaro_distance(s1, s2):
             (match - t) / match)/ 3.0
 
 
-@app.get('/PPATK/')
-async def dttot(Nama):
+@app.get('/PEP/')
+async def dprd_tk1(Nama):
     regex = re.compile('[^a-zA-Z]')
     Nama = regex.sub('', Nama)
 
@@ -114,6 +114,7 @@ async def dttot(Nama):
     df_show = df_show.head(10)
 
     respond_out = {
+        "User Input" : Nama,
         "Output" : df_show
     }
     return respond_out
