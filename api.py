@@ -24,7 +24,7 @@ def get_all_data():
     get data
     output : DataFrame
     """
-    df = pd.read_excel("./data/dprd_TK_I_nama_alphabet_only.xlsx")
+    df = pd.read_excel("./data/remove_depan.xlsx")
     df = df.fillna("No Data")
     return df
 
@@ -108,7 +108,7 @@ async def dprd_tk1(Nama):
     Nama = regex.sub('', Nama)
 
     df = get_all_data()
-    df["score"] = df['Nama_alphabet'].apply(lambda x: jaro_distance(x, Nama))
+    df["score"] = df['only_character'].apply(lambda x: jaro_distance(x, Nama))
     df = df.sort_values(by="score", ascending=False).reset_index(drop=True)
     df_show = df.copy()
     df_show = df_show.head(10)
