@@ -101,10 +101,26 @@ def jaro_distance(s1, s2):
     return (match/ len1 + match / len2 +
             (match - t) / match)/ 3.0
 
+def define_list():
+    list_gelar_depan = [" kph ", " cn ", " ust ", " drg ", " tgh ", " mayjen tni purn ", " capt "," brigjen tni purn", 
+                        " h ", " hj ", " kh ", " dr ", " dra ", " drs ", " prof ", " ir "]
+    
+    return list_gelar_depan
+
 
 @app.get('/PEP/')
 async def dprd_tk1(Nama):
+    list_gelar_depan = define_list()
     regex = re.compile('[^a-zA-Z]')
+    Nama = regex.sub('', Nama)
+    
+    Nama = Nama.lower()
+    Nama = Nama.replace(",", " ")
+    Nama = Nama.replace(".", " ")
+    Nama = " " + Nama
+    filter_str = '|'.join(list_gelar_depan)
+    for x in range(5):
+        Nama = re.sub(filter_str, ' ', Nama)
     Nama = regex.sub('', Nama)
 
     df = get_all_data()
