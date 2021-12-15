@@ -112,7 +112,6 @@ def define_list():
 async def dprd_tk1(Nama):
     list_gelar_depan = define_list()
     regex = re.compile('[^a-zA-Z]')
-    Nama = regex.sub('', Nama)
     
     Nama = Nama.lower()
     Nama = Nama.replace(",", " ")
