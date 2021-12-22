@@ -9,6 +9,7 @@ from math import floor, ceil
 from fastapi import BackgroundTasks, FastAPI
 import warnings
 import re
+from scraparazzie import scraparazzie
 warnings.filterwarnings("ignore")
 
 app = FastAPI()
@@ -19,19 +20,54 @@ class Userinput(BaseModel):
     DOB: Optional[str]=None
     POB: Optional[str]=None
 
+def get_constraint():
+    """
+    get constraint / schema data for pep
+    output : DataFrame
+    """
+    file_path = "./data/pep_scenario.xlsx"
+    df = pd.read_excel(file_path)
+    return df
+
 def get_all_data():
     """
     get data
     output : DataFrame
     """
-    df = pd.read_excel("./data/remove_depan.xlsx")
+    df = pd.read_csv("./data/Test_all_data_pep.csv")
     df = df.fillna("No Data")
     return df
 
+def DOB_similarity(df, col, dob_input):
+    """
+    filter DOB column
+    output : DataFrame
+    """
+    df = df[df[col].str.contains(dob_input)].reset_index(drop=True)
+    return df
+
+def POB_similarity(df, col, pob_input):
+    """
+    filter POB column
+    output : DataFrame
+    """
+    try:
+        df = df[df[col].str.contains(pob_input)].reset_index(drop=True)
+    except:
+        df = df[df[col].str.contains(pob_input).fillna(False)].reset_index(drop=True)
+    return df
+
+def treatment_constraint(nama_status, dob_status, pob_status):
+    df = get_constraint()
+    dict_value = {"nama" :nama_status,
+                "dob" : dob_status,
+                "pob" : pob_status}
+    result = df.loc[(df[list(dict_value)] == pd.Series(dict_value)).all(axis=1)]
+    result_recommendation =  list(set(result["recommendation"]))[0]
+    return result_recommendation
+
+
 def jaro_distance(s1, s2):
-    print("Calculate Jaro Distance")
-    print(s1)
-    print(s2)
     # lower case all the character
     s1 = s1.lower()
     s2 = s2.lower()
@@ -102,17 +138,41 @@ def jaro_distance(s1, s2):
             (match - t) / match)/ 3.0
 
 def define_list():
-    list_gelar_depan = [" kph ", " cn ", " ust ", " drg ", " tgh ", " mayjen tni purn ", " capt "," brigjen tni purn", 
-                        " h ", " hj ", " kh ", " dr ", " dra ", " drs ", " prof ", " ir "]
-    
+    list_gelar_depan = [" kph ", " cn ", " ust ", " drg ", " tgh ", " mayjen tni purn ", " capt "," brigjen tni purn", " h ", " hj ", " kh ", " dr ",
+                    " dra ", " drs ", " prof ", " ir ", " jenderal pol  purn ", "  c  ", " hc ", " krt ", " mayjen tni  mar  purn ", " st ", " tb ",
+                    " hc ", " drh ", " irjen  pol  purn ", " pdt ", " marsekal tni purn ", " k ", " letnan jenderal tni purn ", " laksdya  tni purn ",
+                    " irjen pol purn ", " mayjen tni mar  purn "]
+
     return list_gelar_depan
+
+def news_filter(Nama):
+    print("Get Google News with query {}...".format(Nama))
+    list_keyword = [" partai", " politik", " partai politik", " dpr", " mpr", " anggota dpr", " anggota mpr", " pelantikan",
+                " presiden", " menteri", " pemilihan", " pilkada", " pemilu"]
+    news_query = scraparazzie.NewsClient(language = 'indonesian', location = 'Indonesia', query = Nama, max_results = 100)
+    news_output = news_query.export_news()
+    list_title = [" " + x["title"] for x in news_output]
+
+    list_idx = []
+    for idx, url_string in enumerate(list_title):
+        if any(ext in url_string for ext in list_keyword):
+            list_idx.append(news_output[idx])
+
+    top_ten = news_output[:10]
+
+    return list_idx, top_ten
 
 
 @app.get('/PEP/')
-async def dprd_tk1(Nama):
+async def dprd_tk1(Nama, DOB: Optional[str]=None, POB: Optional[str]=None):
+    nama_status = "not match"
+    dob_status = "not match"
+    pob_status = "not match"
+
     list_gelar_depan = define_list()
     regex = re.compile('[^a-zA-Z]')
-    
+
+    # Nama preprcessing
     Nama = Nama.lower()
     Nama = Nama.replace(",", " ")
     Nama = Nama.replace(".", " ")
@@ -120,17 +180,53 @@ async def dprd_tk1(Nama):
     filter_str = '|'.join(list_gelar_depan)
     for x in range(5):
         Nama = re.sub(filter_str, ' ', Nama)
-    Nama = regex.sub('', Nama)
+    Nama_prepro = regex.sub('', Nama)
 
     df = get_all_data()
-    df["score"] = df['only_character'].apply(lambda x: jaro_distance(x, Nama))
+    df["score"] = df['only_character'].apply(lambda x: jaro_distance(x, Nama_prepro))
     df = df.sort_values(by="score", ascending=False).reset_index(drop=True)
-    df_show = df.copy()
-    df_show = df_show.head(10)
+
+    # filter nama
+    df_nama = df[df["score"] >= 0.75].reset_index(drop=True)
+    if df_nama.shape[0] > 0:
+        nama_status = "match"
+        if DOB is not None:
+            DOB = DOB.strip()
+            DOB = DOB.lower()
+            df_DOB = DOB_similarity(df_nama, 'tanggal lahir', DOB)
+            if df_DOB.shape[0] > 0:
+                df_nama = df_DOB
+                dob_status = "match"
+
+        if POB is not None:
+            POB = POB.strip()
+            POB = POB.lower()
+            df_POB = POB_similarity(df_nama, 'tempat lahir', POB)
+            if df_POB.shape[0] > 0:
+                df_nama = df_POB
+                pob_status = "match"
+        df_show = df_nama.copy()
+        df_show = df_show.head(10)
+    else:
+        df_show = df_nama.copy()
+        df_show = df_show.head(10)
+    reccomendation = treatment_constraint(nama_status, dob_status, pob_status)
+
+    if reccomendation == "Phase 2":
+        list_idx, top_ten = news_filter(df_show["Nama"][0])
+    else:
+        list_idx = []
+        top_ten = []
+
+    cols = ["Nama", "tempat lahir", "tanggal lahir", "score"]
+    df_show = df_show[cols]
 
     respond_out = {
-        "User Input" : Nama,
-        "Output" : df_show
+        "Recommendation" : reccomendation,
+        "User_Input" : Nama_prepro,
+        "Output" : df_show,
+        "Filtered_News" : list_idx,
+        "Top_10_Google_News" : top_ten
     }
     return respond_out
 
