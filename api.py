@@ -10,6 +10,9 @@ from fastapi import BackgroundTasks, FastAPI
 import warnings
 import re
 from scraparazzie import scraparazzie
+from bs4 import BeautifulSoup
+import requests
+
 warnings.filterwarnings("ignore")
 
 app = FastAPI()
@@ -145,26 +148,65 @@ def define_list():
 
     return list_gelar_depan
 
-def news_filter(Nama):
-    print("Get Google News with query {}...".format(Nama))
-    list_keyword = [" partai", " politik", " partai politik", " dpr", " mpr", " anggota dpr", " anggota mpr", " pelantikan",
-                " presiden", " menteri", " pemilihan", " pilkada", " pemilu"]
-    news_query = scraparazzie.NewsClient(language = 'indonesian', location = 'Indonesia', query = Nama, max_results = 100)
-    news_output = news_query.export_news()
-    list_title = [" " + x["title"] for x in news_output]
+# def news_filter(Nama):
+#     print("Get Google News with query {}...".format(Nama))
+#     list_keyword = [" partai", " politik", " partai politik", " dpr", " mpr", " anggota dpr", " anggota mpr", " pelantikan",
+#                 " presiden", " menteri", " pemilihan", " pilkada", " pemilu"]
+#     news_query = scraparazzie.NewsClient(language = 'indonesian', location = 'Indonesia', query = Nama, max_results = 100)
+#     news_output = news_query.export_news()
+#     list_title = [" " + x["title"] for x in news_output]
+#
+#     list_idx = []
+#     for idx, url_string in enumerate(list_title):
+#         if any(ext in url_string for ext in list_keyword):
+#             list_idx.append(news_output[idx])
+#
+#     top_ten = news_output[:10]
+#
+#     return list_idx, top_ten
 
-    list_idx = []
-    for idx, url_string in enumerate(list_title):
-        if any(ext in url_string for ext in list_keyword):
-            list_idx.append(news_output[idx])
+def get_url(url):
+    headers = {
+         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
+     }
+    r = requests.get(url, headers=headers)  # Using the custom headers we defined above
+    soup = BeautifulSoup(r.content, 'html5lib')
+    return soup
 
-    top_ten = news_output[:10]
 
-    return list_idx, top_ten
+def extract_funct(soup, summary):
+    for container in soup.findAll('div', {"class":'tF2Cxc'}):
+        heading = container.find('h3', {"class" : 'LC20lb MBeuO DKV0Md'}).text
+        link = container.find('a')['href']
+
+        summary.append({
+          'Heading': heading,
+          'Link': link,
+        })
+    return summary
+
+
+def get_google(Nama):
+    # query for 1st page
+    url = "https://www.google.com/search?q={}".format(Nama)
+    soup = get_url(url)
+    summary = []
+    res = extract_funct(soup, summary)
+
+    # query for 2nd page
+    base_url = "https://www.google.com"
+    page_2 = soup.find('a', {"aria-label":'Page 2'})['href']
+    url2 = base_url+page_2
+    soup2 = get_url(url)
+    res = extract_funct(soup2, res)
+
+    return res[:10]
+
 
 
 @app.get('/PEP/')
 async def dprd_tk1(Nama, DOB: Optional[str]=None, POB: Optional[str]=None):
+    query = Nama
     nama_status = "not match"
     dob_status = "not match"
     pob_status = "not match"
@@ -212,10 +254,11 @@ async def dprd_tk1(Nama, DOB: Optional[str]=None, POB: Optional[str]=None):
         df_show = df_show.head(10)
     reccomendation = treatment_constraint(nama_status, dob_status, pob_status)
 
-    if reccomendation == "Phase 2":
-        list_idx, top_ten = news_filter(df_show["Nama"][0])
+    if reccomendation == "Phase 2" or reccomendation == "PEP":
+        # list_idx, top_ten = news_filter(df_show["Nama"][0])
+        top_ten = get_google(query)
     else:
-        list_idx = []
+        # list_idx = []
         top_ten = []
 
     cols = ["Nama", "tempat lahir", "tanggal lahir", "score"]
@@ -225,8 +268,8 @@ async def dprd_tk1(Nama, DOB: Optional[str]=None, POB: Optional[str]=None):
         "Recommendation" : reccomendation,
         "User_Input" : Nama_prepro,
         "Output" : df_show,
-        "Filtered_News" : list_idx,
-        "Top_10_Google_News" : top_ten
+        # "Filtered_News" : list_idx,
+        "Top_10_Google_Search" : top_ten
     }
     return respond_out
 
