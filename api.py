@@ -119,10 +119,8 @@ def jaro_distance(s1, s2):
     t = 0
     point = 0
 
-    # Count number of occurrences
-    # where two characters match but
-    # there is a third matched character
-    # in between the indices
+    # Count number of occurrences where two characters match but
+    # there is a third matched character in between the indices
     for i in range(len1):
         if (hash_s1[i]):
 
@@ -170,7 +168,7 @@ def get_url(url):
          'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
      }
     r = requests.get(url, headers=headers)  # Using the custom headers we defined above
-    soup = BeautifulSoup(r.content, 'lxml')
+    soup = BeautifulSoup(r.content, 'html.parser')
     return soup
 
 
@@ -187,7 +185,7 @@ def extract_funct(soup, summary):
 
 
 def get_google(Nama):
-    print("query for {} from google....".format(Nama))
+    print("query for {} from google...".format(Nama))
     # query for 1st page
     url = "https://www.google.co.id/search?q={}".format(Nama)
     soup = get_url(url)
@@ -255,12 +253,18 @@ async def dprd_tk1(Nama, DOB: Optional[str]=None, POB: Optional[str]=None):
         df_show = df_show.head(10)
     reccomendation = treatment_constraint(nama_status, dob_status, pob_status)
 
+
+    if df_show.shape[0] > 0:
+        query = df['only_character'][0]
+    else:
+        pass
+
+
     if reccomendation == "Phase 2" or reccomendation == "PEP":
-#           top_ten = get_google(query)
-          try:
-            # list_idx, top_ten = news_filter(df_show["Nama"][0])
+        # list_idx, top_ten = news_filter(df_show["Nama"][0])
+        try:
             top_ten = get_google(query)
-          except:
+        except:
             top_ten = []
     else:
         # list_idx = []
