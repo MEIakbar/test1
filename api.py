@@ -256,11 +256,12 @@ async def dprd_tk1(Nama, DOB: Optional[str]=None, POB: Optional[str]=None):
     reccomendation = treatment_constraint(nama_status, dob_status, pob_status)
 
     if reccomendation == "Phase 2" or reccomendation == "PEP":
-          try:
+          top_ten = get_google(query)
+#           try:
             # list_idx, top_ten = news_filter(df_show["Nama"][0])
-            top_ten = get_google(query)
-          except:
-            top_ten = []
+#             top_ten = get_google(query)
+#           except:
+#             top_ten = []
     else:
         # list_idx = []
         top_ten = []
