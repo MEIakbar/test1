@@ -255,7 +255,7 @@ async def dprd_tk1(Nama, DOB: Optional[str]=None, POB: Optional[str]=None):
 
 
     if df_show.shape[0] > 0:
-        query = df['only_character'][0]
+        query = df['Remove Gelar Depan'][0]
     else:
         pass
 
