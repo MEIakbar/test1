@@ -193,12 +193,14 @@ def get_google(Nama):
     res = extract_funct(soup, summary)
 
     # query for 2nd page
-    base_url = "https://www.google.co.id"
-    page_2 = soup.find('a', {"aria-label":'Page 2'})['href']
-    url2 = base_url+page_2
-    soup2 = get_url(url)
-    res = extract_funct(soup2, res)
-
+    try:
+        base_url = "https://www.google.co.id"
+        page_2 = soup.find('a', {"aria-label":'Page 2'})['href']
+        url2 = base_url+page_2
+        soup2 = get_url(url)
+        res = extract_funct(soup2, res)
+    except:
+        continue
     return res[:10]
 
 
