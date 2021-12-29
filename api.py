@@ -255,7 +255,7 @@ async def dprd_tk1(Nama, DOB: Optional[str]=None, POB: Optional[str]=None):
 
 
     if df_show.shape[0] > 0:
-        query = df['Remove Gelar Depan'][0]
+        query = df_show['Remove Gelar Depan'][0]
     else:
         print("Pass gelar depan")
         pass
@@ -271,7 +271,7 @@ async def dprd_tk1(Nama, DOB: Optional[str]=None, POB: Optional[str]=None):
         # list_idx = []
         top_ten = []
 
-    cols = ["Nama", "tempat lahir", "tanggal lahir", "score", 'Remove Gelar Depan']
+    cols = ["Nama", "tempat lahir", "tanggal lahir", "score"]
     df_show = df_show[cols]
 
     respond_out = {
