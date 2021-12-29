@@ -200,7 +200,7 @@ def get_google(Nama):
         soup2 = get_url(url)
         res = extract_funct(soup2, res)
     except:
-        continue
+        pass
     return res[:10]
 
 
