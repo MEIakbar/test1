@@ -278,7 +278,7 @@ async def dprd_tk1(Nama, DOB: Optional[str]=None, POB: Optional[str]=None):
 
     respond_out = {
         "Recommendation" : reccomendation,
-        "User_Input" : Nama_prepro[0],
+#         "User_Input" : Nama_prepro,
 #         "Output" : df_show,
         # "Filtered_News" : list_idx,
         "Top_10_Google_Search" : top_ten
