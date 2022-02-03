@@ -1,0 +1,17 @@
+No,nama,nik,dob,pob,recommendation,treatment
+1,match,match,match,match,Terrorist Indicated,rejected
+2,not match,match,match,match,Terrorist Indicated,rejected
+3,match,match,match,not match,Terrorist Indicated,rejected
+4,not match,match,match,not match,EDD,next step
+5,match,match,not match,not match,Terrorist Indicated,rejected
+6,not match,match,not match,not match,EDD,next step
+7,match,match,not match,match,Terrorist Indicated,rejected
+8,not match,match,not match,match,EDD,next step
+9,match,not match,not match,not match,EDD,next step
+10,not match,not match,not match,not match,Not Terroris Indicated,passed
+11,match,not match,not match,match,EDD,next step
+12,not match,not match,not match,match,Not Terroris Indicated,passed
+13,match,not match,match,match,Terrorist Indicated,rejected
+14,not match,not match,match,match,Not Terroris Indicated,passed
+15,match,not match,match,not match,EDD,next step
+16,not match,not match,match,not match,Not Terroris Indicated,passed
